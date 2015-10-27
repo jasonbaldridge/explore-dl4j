@@ -19,12 +19,19 @@ Feel free to use a different directory to put the code in and add the PATH to yo
 
 Note: if you change the code, you'll need to run `sbt stage` for those changes be available to the `bin` scripts. (Use `compile` in sbt while developing as usual to catch and fix errors.)
 
-Also, add this to your `.bash_profile` if you don't have the `shuf` command on your system. This is generally useful to have around for manipulating files.
+### Help
+
+Use the `--help` option with any of the commands in `explore-dl4j/bin` to get all options available.
+
+### Shuffling
+
+Add this to your `.bash_profile` if you don't have the `shuf` command on your system. 
 
 ```
 $ alias shuf="perl -MList::Util -e 'print List::Util::shuffle <>'"`
 $ source ~/.bash_profile
 ```
+This randomly reorders the lines in a text file. It is generally useful to have around for manipulating files. (I've found this method to be easier than installing actual a prebuilt `shuf` binary on MacOS.)
 
 ## Instructions for sentiment classifier
   

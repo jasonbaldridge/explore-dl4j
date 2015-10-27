@@ -9,6 +9,7 @@ import org.deeplearning4j.models.word2vec.wordstore.inmemory.InMemoryLookupCache
 import scala.collection.mutable.ListBuffer
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.linalg.ops.transforms.Transforms.exp
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -82,10 +83,12 @@ object Word2VecUtil {
     */
   def computeAvgWordVector(
     inputFilename: String,
-    wordVectors: WordVectors,
-    vectorLength: Int = 200
+    wordVectors: WordVectors
   ) = {
 
+    // How long are the vectors?
+    val vectorLength = wordVectors.lookupTable.vectors.next.length
+      
     // Accumulator for the featurized items (label + document as vector).
     val data = new ListBuffer[(INDArray,INDArray)]()
     
@@ -95,8 +98,7 @@ object Word2VecUtil {
 
       // The iterator returns an option. This enables a clean solution to skipping neutral
       // items for this particular task.
-      val infoOpt = it.nextLabelAndSentence
-      infoOpt.map { info =>
+      it.nextLabelAndSentence.map { info =>
         
         val (label,words) = info
 
@@ -105,11 +107,12 @@ object Word2VecUtil {
         
         // Add avg tweet vector to list
         val sumTweetVector = Nd4j.zeros(1, vectorLength)
-        words.foreach { word =>
-          val vec = wordVectors.getWordVectorMatrix(word)
+        var wordsFound = 0
+        for (word <- words; if wordVectors.hasWord(word)) {
+          wordsFound += 1
           sumTweetVector.addi(wordVectors.getWordVectorMatrix(word))
         }
-        val averageTweetVector = sumTweetVector.div(words.length)
+        val averageTweetVector = sumTweetVector.div(wordsFound)
         data.append((labelVector,averageTweetVector))
       }
     }

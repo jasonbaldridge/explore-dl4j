@@ -59,34 +59,30 @@ object DeepSentiment {
   def main(args: Array[String]) {
     val conf = new ClassifierCommand(args)
     conf.afterInit()
-
-    val trainFileName = conf.trainfile()
-    val wordVectorFileName = conf.vectorfile()
     
     // Load word vectors.
-    val wordVectors = getVectors(wordVectorFileName)
+    val wordVectors = getVectors(conf.vectorfile())
 
-    // We are using the word vectors as the input features, so obtain
-    // the length of the vectors to set thu inputNum value to the MLN.
-    val vectorLength = wordVectors.lookupTable.vectors.next.length
-    
     // Train the model.
-    val featureVectors = computeAvgWordVector(trainFileName,wordVectors)
-    val model = train(featureVectors, conf.numlayers(), vectorLength)
+    val featureVectors = computeAvgWordVector(conf.trainfile(),wordVectors)
+    val model = train(featureVectors, conf.numlayers())
   
     // Construct a reusable DeepSentiment object that can eval new items.
     val deepSentiment = new DeepSentiment(model)
   
-    // Evaluate on test data.
-    val testFileName = conf.evalfile()
-    val evalStats = deepSentiment.eval(computeAvgWordVector(testFileName,wordVectors), conf.verbose())
-  
-    println(evalStats)
+    // Evaluate on test data if provided.
+    conf.evalfile.get.foreach { testFileName =>
+      val evalStats =
+        deepSentiment.eval(computeAvgWordVector(testFileName,wordVectors), conf.verbose())
+      println(evalStats)
+    }
   }
 
-  def train(items: List[(INDArray,INDArray)], numLayers: Int, inputNum: Int) = {
+  def train(items: List[(INDArray,INDArray)], numLayers: Int) = {
 
-    log.info("Build model....")
+    // We are using the word vectors as the input features, so obtain
+    // the length of the vectors to set thu inputNum value to the MLN.
+    val inputNum = items.head._2.length
 
     // Some parameters to set. 
     val outputNum = 2 // Because we are doing binary positive/negative classification.
@@ -95,14 +91,14 @@ object DeepSentiment {
 
     // Train the model.
     log.info("Train model...")
-    val conf = {
+    val mlnConf = {
       if (numLayers==2)
         twoLayerConf(seed, iterations, inputNum, outputNum)
       else
         oneLayerConf(seed, iterations, inputNum, outputNum)
     }
     
-    val model = new MultiLayerNetwork(conf)
+    val model = new MultiLayerNetwork(mlnConf)
     model.init()
     for ((labelRow, featureRow) <- items)
       model.fit(featureRow, labelRow)
