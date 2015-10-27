@@ -11,13 +11,15 @@ Commands to checkout the repository, compile the code and add the bin directory 
 $ mkdir devel
 $ cd devel
 $ git clone https://github.com/jasonbaldridge/explore-dl4j.git
-$ sbt stage
 $ export PATH=$PATH:~/devel/explore-dl4j/bin/
+$ sbt stage
 ```
 
 Feel free to use a different directory to put the code in and add the PATH to your bash profile, etc.
 
-Also, add this to your `.bash_profile` if you don't have the `shuf` command on your system.
+Note: if you change the code, you'll need to run `sbt stage` for those changes be available to the `bin` scripts. (Use `compile` in sbt while developing as usual to catch and fix errors.)
+
+Also, add this to your `.bash_profile` if you don't have the `shuf` command on your system. This is generally useful to have around for manipulating files.
 
 ```
 $ alias shuf="perl -MList::Util -e 'print List::Util::shuffle <>'"`

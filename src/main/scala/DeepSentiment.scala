@@ -63,12 +63,13 @@ object DeepSentiment {
     val trainFileName = conf.trainfile()
     val wordVectorFileName = conf.vectorfile()
     
-    // We'll set this in code for now, but could be configured.
-    val vectorLength = 200
-    
     // Load word vectors.
     val wordVectors = getVectors(wordVectorFileName)
-  
+
+    // We are using the word vectors as the input features, so obtain
+    // the length of the vectors to set thu inputNum value to the MLN.
+    val vectorLength = wordVectors.lookupTable.vectors.next.length
+    
     // Train the model.
     val featureVectors = computeAvgWordVector(trainFileName,wordVectors)
     val model = train(featureVectors, conf.numlayers(), vectorLength)

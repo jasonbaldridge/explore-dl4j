@@ -13,9 +13,6 @@ class ClassifierCommand(arguments: Seq[String]) extends ScallopConf(arguments) {
   // File containing word2vec vectors.
   lazy val vectorfile = opt[String]()
 
-  // The length of the w2v vectors.
-  lazy val vectorlength = opt[Int](default=Some(200))
-
   // The maximum number of training examples to use. If unspecified,
   // all are used.
   lazy val maxtraining = opt[Int]()
