@@ -7,6 +7,7 @@ scalaVersion := "2.10.4"
 lazy val root = project.in(file("."))
 
 libraryDependencies ++= Seq(
+  "org.rogach" %% "scallop" % "0.9.5",
   "com.opencsv" % "opencsv" % "3.4",
   "commons-io" % "commons-io" % "2.4",
   "com.google.guava" % "guava" % "18.0",
@@ -27,3 +28,4 @@ resolvers += "Local Maven Repository" at "file://"+Path.userHome.absolutePath+"/
 
 enablePlugins(JavaAppPackaging)
 
+mainClass in Compile := Some("expdl4j.DeepSentiment")

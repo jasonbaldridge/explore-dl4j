@@ -57,37 +57,33 @@ object DeepSentiment {
     * create a DeepSentiment instance which can be used for eval.
     */ 
   def main(args: Array[String]) {
-    val Array(trainFileName, testFileName, wordVectorFileName) = args
+    val conf = new ClassifierCommand(args)
+    conf.afterInit()
 
+    val trainFileName = conf.trainfile()
+    val wordVectorFileName = conf.vectorfile()
+    
     // We'll set this in code for now, but could be configured.
     val vectorLength = 200
     
-    // Train word vectors if they haven't been already.
-    if (!new File(wordVectorFileName).isFile)
-      trainAndSaveWord2Vec(trainFileName, wordVectorFileName, vectorLength)
-
-    // Load trained vectors.
+    // Load word vectors.
     val wordVectors = getVectors(wordVectorFileName)
-
+  
     // Train the model.
-    val model = train(computeAvgWordVector(trainFileName,wordVectors), vectorLength)
-
+    val featureVectors = computeAvgWordVector(trainFileName,wordVectors)
+    val model = train(featureVectors, conf.numlayers(), vectorLength)
+  
     // Construct a reusable DeepSentiment object that can eval new items.
     val deepSentiment = new DeepSentiment(model)
-
+  
     // Evaluate on test data.
-    val evalStats = deepSentiment.eval(computeAvgWordVector(testFileName,wordVectors))
-
-    // Use this to see the output predictions on the first twenty items.
-    //val evalStats = deepSentiment.eval(computeAvgWordVector(testFileName,wordVectors).take(20), true)
-
-    // Use this to see the output predictions on the first twenty items of the training set.
-    //val evalStats = deepSentiment.eval(computeAvgWordVector(trainFileName,wordVectors).take(20), true)
-
+    val testFileName = conf.evalfile()
+    val evalStats = deepSentiment.eval(computeAvgWordVector(testFileName,wordVectors), conf.verbose())
+  
     println(evalStats)
   }
 
-  def train(items: List[(INDArray,INDArray)], inputNum: Int) = {
+  def train(items: List[(INDArray,INDArray)], numLayers: Int, inputNum: Int) = {
 
     log.info("Build model....")
 
@@ -98,8 +94,13 @@ object DeepSentiment {
 
     // Train the model.
     log.info("Train model...")
-    val conf = singleLayerConf(seed, iterations, inputNum, outputNum)
-    //val conf = twoLayerConf(seed, iterations, inputNum, outputNum)
+    val conf = {
+      if (numLayers==2)
+        twoLayerConf(seed, iterations, inputNum, outputNum)
+      else
+        oneLayerConf(seed, iterations, inputNum, outputNum)
+    }
+    
     val model = new MultiLayerNetwork(conf)
     model.init()
     for ((labelRow, featureRow) <- items)
@@ -111,7 +112,7 @@ object DeepSentiment {
     * A configuration for doing logistic regression, though it seems to do so poorly.
     * Not sure what to expect exactly -- could be the linear algebra or some other factor?
     */
-  def singleLayerConf(seed: Int, iterations: Int, inputNum: Int, outputNum: Int) = {
+  def oneLayerConf(seed: Int, iterations: Int, inputNum: Int, outputNum: Int) = {
     new NeuralNetConfiguration.Builder()
       .seed(seed)
       .iterations(iterations)

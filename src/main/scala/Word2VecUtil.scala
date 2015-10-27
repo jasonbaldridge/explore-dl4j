@@ -20,7 +20,28 @@ object Word2VecUtil {
   lazy val log = LoggerFactory.getLogger(expdl4j.Word2VecUtil.getClass)
 
   /**
-    * Train word2vec model, save it to disk and return it.
+    * Main method for training vectors. Accessible via the
+    * bin/train-w2v script.
+    */
+  def main(args: Array[String]) {
+
+    val conf = new Word2VecCommand(args)
+    conf.afterInit()
+
+    val trainFileName = conf.trainfile()
+    val wordVectorFileName = conf.vectorfile()
+    val vectorLength = conf.vectorlength()
+
+    if (new File(wordVectorFileName).isFile)
+      println(s"File $wordVectorFileName already exists. Exiting.")
+    else {
+      trainAndSaveWord2Vec(trainFileName, wordVectorFileName, vectorLength)
+    }
+
+  }
+  
+  /**
+    * Train word2vec model and save it to disk.
     */
   def trainAndSaveWord2Vec(
     trainFileName: String,
