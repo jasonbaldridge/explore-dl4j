@@ -31,7 +31,7 @@ Add this to your `.bash_profile` if you don't have the `shuf` command on your sy
 $ alias shuf="perl -MList::Util -e 'print List::Util::shuffle <>'"`
 $ source ~/.bash_profile
 ```
-This randomly reorders the lines in a text file. It is generally useful to have around for manipulating files. (I've found this method to be easier than installing actual a prebuilt `shuf` binary on MacOS.)
+This randomly reorders the lines in a text file. It is generally useful to have around for manipulating files. (I've found this method to be easier than installing actual a prebuilt 
 
 ## Instructions for sentiment classifier
   
