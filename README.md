@@ -1,9 +1,11 @@
 Explore DL4J
 ====
 
-Example code to explore for using DL4J in Scala.
+Example code to explore for using [Deeplearning4J](http://deeplearning4j.org/) in Scala.
 
 ## Compilation and setup
+
+You need Java 7 or higher and `sbt` installed.
 
 Commands to checkout the repository, compile the code and add the bin directory to your path.
   
@@ -11,6 +13,7 @@ Commands to checkout the repository, compile the code and add the bin directory 
 $ mkdir devel
 $ cd devel
 $ git clone https://github.com/jasonbaldridge/explore-dl4j.git
+$ cd explore-dl4j/
 $ export PATH=$PATH:~/devel/explore-dl4j/bin/
 $ sbt stage
 ```
@@ -28,7 +31,7 @@ Use the `--help` option with any of the commands in `explore-dl4j/bin` to get al
 Add this to your `.bash_profile` if you don't have the `shuf` command on your system. 
 
 ```
-$ alias shuf="perl -MList::Util -e 'print List::Util::shuffle <>'"`
+$ alias shuf="perl -MList::Util -e 'print List::Util::shuffle <>'"
 $ source ~/.bash_profile
 ```
 This randomly reorders the lines in a text file. It is generally useful to have around for manipulating files. (I've found this method to be easier than installing actual a prebuilt 
@@ -46,10 +49,17 @@ $ shuf < training.1600000.processed.noemoticon.csv > shuffled_training.processed
 We first need to train the word2vec vectors.
 
 ```
-$ train-word-vectors -trainfile shuffled_training.processed.noemoticon.csv --vectorfile sentiment_word_vectors.txt --vectorlength 200
+$ train-word-vectors --trainfile shuffled_training.processed.noemoticon.csv --vectorfile sentiment_word_vectors.txt --vectorlength 200
 ```
 
-Run a sentiment classifier experiment. We'll run with less data to start with to ensure it is working, which is specified with the `--maxtraining`` argument.
+Run a sentiment classifier experiment. We'll run with less data to start with to ensure it is working. Create a file with just 10k examples and provide that as the input to `run-sentiment`.
+
+```
+$ head -10000 shuffled_training.processed.noemoticon.csv > small_training.processed.noemoticon.csv
+$ run-sentiment --trainfile small_training.processed.noemoticon.csv --vectorfile sentiment_word_vectors.txt --evalfile testdata.manual.2009.06.14.csv 
+```
+
+This should run, though it'll get accuracy no better than chance. This is running a single layer network (logistic regression).
 
 ```
 $ run-sentiment --trainfile shuffled_training.processed.noemoticon.csv --vectorfile sentiment_word_vectors.txt --evalfile testdata.manual.2009.06.14.csv
