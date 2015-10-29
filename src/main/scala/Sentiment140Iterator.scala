@@ -6,6 +6,7 @@ import scala.collection.mutable.ListBuffer
 import java.io._
 import org.deeplearning4j.text.sentenceiterator.SentencePreProcessor
 import org.deeplearning4j.text.sentenceiterator.BaseSentenceIterator
+import org.nd4j.linalg.api.ndarray.INDArray
 
 /**
   * A class that allows one to iterate over items in the Sentiment140 data, and converts
@@ -36,6 +37,7 @@ class Sentiment140Iterator(
       else if (integerLabel==4) Some(Array(0.,1.)) // Positive sentiment
       else None
     val processedSentence = preprocessor.preProcess(info(5)).split("\\s+")
+    //val features = w2vUtil.createDocumentVector(processedSentence)
     labelsOpt.map(labels => (labels, processedSentence))
   }
 
