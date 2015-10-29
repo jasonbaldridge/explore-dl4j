@@ -45,7 +45,7 @@ object DeepSentiment {
     
     // Train the model.
     val trainingData = vectorizeData(conf.trainFile(),w2vUtil)
-    val model = train(trainingData, conf.numLayers())
+    val model = SimpleClassifier.train(trainingData, conf.numLayers())
   
     // Construct a reusable MLNContainer object that can eval new items.
     val deepSentiment = new MLNContainer(model)
@@ -80,38 +80,4 @@ object DeepSentiment {
     data.toList
   }
 
-  
-  def train(items: List[(INDArray,INDArray)], numLayers: Int) = {
-
-    // Import convenience functions for creating MNL configs.
-    import NetworkConfiguration._
-    
-    // We are using the word vectors as the input features, so obtain
-    // the length of the vectors to set thu inputNum value to the MLN.
-    val inputNum = items.head._2.length
-
-    // Some parameters to set. 
-    val outputNum = 2 // Because we are doing binary positive/negative classification.
-    val iterations = 5
-    val seed = 123
-
-    // Train the model.
-    log.info("Train model...")
-    val mlnConf = {
-      if (numLayers==2)
-        twoLayerConf(seed, iterations, inputNum, outputNum)
-      else
-        oneLayerConf(seed, iterations, inputNum, outputNum)
-    }
-    
-    val model = new MultiLayerNetwork(mlnConf)
-    model.init()
-    for ((labelRow, featureRow) <- items)
-      model.fit(featureRow, labelRow)
-    model
-  }
-  
 }
-
-
-
