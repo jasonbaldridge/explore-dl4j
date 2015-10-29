@@ -1,1 +1,5 @@
 target
+*RData
+logs/
+*Rout
+simulation_data/simulated*csv

@@ -1,8 +1,6 @@
 package expdl4j
 
 import org.deeplearning4j.eval.Evaluation
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.layers.OutputLayer
@@ -22,64 +20,51 @@ import java.util.ArrayList
 import java.io.File
 
 /**
-  * Static methods for training MLN to construct a reusable sentiment classifier.
+  * Static methods for training MLNs with preprocessed input features.
   */
-object DeepSentiment {
+object SimpleClassifier {
 
-  import Word2VecUtil._
-
-  lazy val log = LoggerFactory.getLogger(expdl4j.DeepSentiment.getClass)
+  lazy val log = LoggerFactory.getLogger(expdl4j.SimpleClassifier.getClass)
 
   /**
-    * Main method: Use trained word vectors those to transform base tweets into
+    * Main method: train word vectors if necessary. Then use those to transform base tweets into
     * dense vectors by averaging vectors for all words. Train the model with those and
-    * create an MLNContainer instance which can be used for eval.
+    * create a DeepSentiment instance which can be used for eval.
     */ 
   def main(args: Array[String]) {
     val conf = new ClassifierCommand(args)
     conf.afterInit()
     
-    // Load word vectors.
-    val wordVectors = getVectors(conf.vectorFile())
-    val w2vUtil = new Word2VecUtil(wordVectors)
-    
     // Train the model.
-    val trainingData = vectorizeData(conf.trainFile(),w2vUtil)
-    val model = train(trainingData, conf.numLayers())
+    val model = train(readData(conf.trainFile()), conf.numLayers())
   
-    // Construct a reusable MLNContainer object that can eval new items.
-    val deepSentiment = new MLNContainer(model)
+    // Construct a reusable MLN container that can eval new items.
+    val mln = new MLNContainer(model)
   
     // Evaluate on test data if provided.
     conf.evalFile.get.foreach { testFileName =>
-      val evalStats = deepSentiment.eval(vectorizeData(testFileName,w2vUtil), conf.verbose())
+      val evalStats = mln.eval(readData(testFileName), conf.verbose())
       println(evalStats)
     }
   }
 
-  /**
-    * Given input documents and word vectors, compute vec-length representation of each
-    * document for input to net.
-    */
-  def vectorizeData(inputFilename: String, w2vUtil: Word2VecUtil) = {
+  def readData(filename: String) = {
+    import com.opencsv.CSVReader
+    import java.io._
 
-    // Accumulator for the featurized items (label + document as vector).
+    // Accumulator for the featurized items (label + feature vector).
     val data = new ListBuffer[(INDArray,INDArray)]()
-
-    // Parse the csv file again to get label and average word vector
-    val it = new Sentiment140Iterator(inputFilename)
-    while (it.hasNext()) {
-
-      // The iterator returns an option. This enables a clean solution
-      // to skipping neutral items for this particular task.
-      it.nextLabelAndSentence.map { case(label,words) =>
-          data.append((Nd4j.create(label),w2vUtil.vectorizeDocument(words)))
-      }
+    val iterator = new CSVReader(new FileReader(filename), ',', '"').iterator
+    while (iterator.hasNext) {
+      val items = iterator.next
+      val labelString :: features = items.toList
+      val label =
+        if (labelString=="0") Array(1.,0.) // negative class
+        else Array(0.,1.) // positive class
+      data.append((Nd4j.create(label),Nd4j.create(features.map(_.toDouble).toArray)))
     }
-    
     data.toList
   }
-
   
   def train(items: List[(INDArray,INDArray)], numLayers: Int) = {
 
