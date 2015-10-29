@@ -6,6 +6,7 @@ import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.models.word2vec.wordstore.inmemory.InMemoryLookupCache
+import org.deeplearning4j.text.sentenceiterator.BaseSentenceIterator
 import scala.collection.mutable.ListBuffer
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
@@ -16,11 +17,15 @@ import java.io.File
 
 class Word2VecUtil(wordVectors: WordVectors) {
 
-  // How long are the vectors?
-  val vectorLength = wordVectors.lookupTable.vectors.next.length
+  // Lookup the number of dimensions.
+  lazy val numDimensions = wordVectors.lookupTable.vectors.next.length
 
+  /**
+    * Given an array of tokens, compute the average vector for all
+    * words in the word vector model.
+    */
   def vectorizeDocument(words: Array[String]) = {
-    val sumVector = Nd4j.zeros(1, vectorLength)
+    val sumVector = Nd4j.zeros(1, numDimensions)
     var wordsFound = 0
     for (word <- words; if wordVectors.hasWord(word)) {
       wordsFound += 1
@@ -48,14 +53,18 @@ object Word2VecUtil {
     val conf = new Word2VecCommand(args)
     conf.afterInit()
 
-    val trainFileName = conf.trainfile()
-    val wordVectorFileName = conf.vectorfile()
-    val vectorLength = conf.vectorlength()
+    val trainFileName = conf.trainFile()
+    val wordVectorFileName = conf.outputFile()
+    val vectorLength = conf.numDimensions()
 
-    if (new File(wordVectorFileName).isFile)
+    if (new File(wordVectorFileName).isFile) {
       println(s"File $wordVectorFileName already exists. Exiting.")
-    else {
-      trainAndSaveWord2Vec(trainFileName, wordVectorFileName, vectorLength)
+    } else {
+      val sentenceIterator = conf.inputType() match {
+        case "sentiment140" => new Sentiment140Iterator(trainFileName)
+        case _ => new RawSentenceIterator(trainFileName) // Default
+      }
+      trainAndSaveWord2Vec(sentenceIterator, wordVectorFileName, vectorLength)
     }
 
   }
@@ -64,11 +73,11 @@ object Word2VecUtil {
     * Train word2vec model and save it to disk.
     */
   def trainAndSaveWord2Vec(
-    trainFileName: String,
+    sentenceIterator: BaseSentenceIterator,
     word2vecTxtFilePath: String,
     vectorLength: Int = 200
   ) {
-    val it = new Sentiment140Iterator(trainFileName)
+
     val cache = new InMemoryLookupCache()
     val table = new InMemoryLookupTable.Builder()
       .vectorLength(vectorLength)
@@ -81,7 +90,7 @@ object Word2VecUtil {
       .minWordFrequency(5).iterations(3)
       .layerSize(vectorLength).lookupTable(table)
       .vocabCache(cache).seed(42)
-      .windowSize(5).iterate(it).build()
+      .windowSize(5).iterate(sentenceIterator).build()
     
     log.info("Training model...")
     vec.fit()
@@ -95,37 +104,5 @@ object Word2VecUtil {
     */
   def getVectors(word2vecTxtFilePath: String) = 
     WordVectorSerializer.loadTxtVectors(new File(word2vecTxtFilePath))
-
-  /**
-    * Given input documents and word vectors, compute vec-length representation of each
-    * document for input to net.
-    */
-  def computeAvgWordVector(
-    inputFilename: String,
-    wordVectors: WordVectors
-  ) = {
-
-    // How long are the vectors?
-    val vectorLength = wordVectors.lookupTable.vectors.next.length
-      
-    // Accumulator for the featurized items (label + document as vector).
-    val data = new ListBuffer[(INDArray,INDArray)]()
-
-    val w2vUtil = new Word2VecUtil(wordVectors)
-    
-    // Parse the csv file again to get label and average word vector
-    val it = new Sentiment140Iterator(inputFilename)
-    while (it.hasNext()) {
-
-      // The iterator returns an option. This enables a clean solution
-      // to skipping neutral items for this particular task.
-      it.nextLabelAndSentence.map { case(label,words) =>
-        data.append((Nd4j.create(label),w2vUtil.vectorizeDocument(words)))
-      }
-    }
-    
-    data.toList
-  }
-
 
 }

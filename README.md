@@ -36,6 +36,16 @@ $ source ~/.bash_profile
 ```
 This randomly reorders the lines in a text file. It is generally useful to have around for manipulating files. (I've found this method to be easier than installing actual a prebuilt 
 
+## Instructions for simulated data
+
+### Linearly separable data
+
+Generate the data.
+
+```
+$ R CMD BATCH generate_linear_data.R
+```
+
 ## Instructions for sentiment classifier
   
 Download the [sentiment140 data](http://cs.stanford.edu/people/alecmgo/trainingandtestdata.zip). Make a directory, say `~/data/sentiment140`, and put it there. Unzip the file. This gives you two files: `testdata.manual.2009.06.14.csv` and `training.1600000.processed.noemoticon.csv`.
@@ -49,7 +59,7 @@ $ shuf < training.1600000.processed.noemoticon.csv > shuffled_training.processed
 We first need to train the word2vec vectors.
 
 ```
-$ train-word-vectors --trainfile shuffled_training.processed.noemoticon.csv --vectorfile sentiment_word_vectors.txt --vectorlength 200
+$ train-word-vectors --train-file shuffled_training.processed.noemoticon.csv --output-file sentiment_word_vectors.txt --num-dimensions 200 --input-type sentiment140
 ```
 
 Run a sentiment classifier experiment. We'll run with less data to start with to ensure it is working. Create a file with just 10k examples and provide that as the input to `run-sentiment`.

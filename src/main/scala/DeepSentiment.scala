@@ -17,6 +17,7 @@ import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.deeplearning4j.nn.conf.{ MultiLayerConfiguration, NeuralNetConfiguration, Updater }
 
+import scala.collection.mutable.ListBuffer
 import java.util.ArrayList
 import java.io.File
 
@@ -61,22 +62,46 @@ object DeepSentiment {
     
     // Load word vectors.
     val wordVectors = getVectors(conf.vectorfile())
-
+    val w2vUtil = new Word2VecUtil(wordVectors)
+    
     // Train the model.
-    val featureVectors = computeAvgWordVector(conf.trainfile(),wordVectors)
-    val model = train(featureVectors, conf.numlayers())
+    val trainingData = vectorizeData(conf.trainfile(),w2vUtil)
+    val model = train(trainingData, conf.numlayers())
   
     // Construct a reusable DeepSentiment object that can eval new items.
     val deepSentiment = new DeepSentiment(model)
   
     // Evaluate on test data if provided.
     conf.evalfile.get.foreach { testFileName =>
-      val evalStats =
-        deepSentiment.eval(computeAvgWordVector(testFileName,wordVectors), conf.verbose())
+      val evalStats = deepSentiment.eval(vectorizeData(testFileName,w2vUtil), conf.verbose())
       println(evalStats)
     }
   }
 
+  /**
+    * Given input documents and word vectors, compute vec-length representation of each
+    * document for input to net.
+    */
+  def vectorizeData(inputFilename: String, w2vUtil: Word2VecUtil) = {
+
+    // Accumulator for the featurized items (label + document as vector).
+    val data = new ListBuffer[(INDArray,INDArray)]()
+
+    // Parse the csv file again to get label and average word vector
+    val it = new Sentiment140Iterator(inputFilename)
+    while (it.hasNext()) {
+
+      // The iterator returns an option. This enables a clean solution
+      // to skipping neutral items for this particular task.
+      it.nextLabelAndSentence.map { case(label,words) =>
+          data.append((Nd4j.create(label),w2vUtil.vectorizeDocument(words)))
+      }
+    }
+    
+    data.toList
+  }
+
+  
   def train(items: List[(INDArray,INDArray)], numLayers: Int) = {
 
     // We are using the word vectors as the input features, so obtain

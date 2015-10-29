@@ -37,7 +37,6 @@ class Sentiment140Iterator(
       else if (integerLabel==4) Some(Array(0.,1.)) // Positive sentiment
       else None
     val processedSentence = preprocessor.preProcess(info(5)).split("\\s+")
-    //val features = w2vUtil.createDocumentVector(processedSentence)
     labelsOpt.map(labels => (labels, processedSentence))
   }
 
