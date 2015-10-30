@@ -59,15 +59,14 @@ You should see something like this.
 ```
 $ tail out_linear_one_layer.txt
 ==========================Scores========================================
- Accuracy:  0.6013
- Precision: 0.5747
- Recall:    0.7792
- F1 Score:  0.6615162577468375
+ Accuracy:  0.9999
+ Precision: 1
+ Recall:    0.9998
+ F1 Score:  0.9998999899989999
 ===========================================================================
 ```
 
-Not as good as you might expect. Probably need to mess around with some parameters.
-
+Looks good!
 
 
 ### Non-linearly separable data
