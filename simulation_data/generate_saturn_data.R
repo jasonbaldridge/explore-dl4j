@@ -54,14 +54,14 @@ mycols = c('red', 'blue')
 numDimensions = 4
     
 # Create training data.
-numTraining = 100000/2
+numTraining = 5000
 training_out = sim_saturn_data(numTraining, numDimensions, c(5, 10), sigma = 1.0)
 training_data = cbind(training_out$labels,training_out$features)
 write.table(training_data,file="simulated_saturn_data_train.csv",row.names=FALSE,col.names=FALSE,quote=FALSE,sep=",")
 
 # Create eval data. Perhas make sigma bigger to make it a bit more interesting.
-numEval = 10000/2
+numEval = 5000
 eval_out = sim_saturn_data(numEval, numDimensions, c(5, 10), sigma = 1.0)
-eval_data = cbind(training_out$labels,training_out$features)
+eval_data = cbind(eval_out$labels,eval_out$features)
 write.table(eval_data,file="simulated_saturn_data_eval.csv",row.names=FALSE,col.names=FALSE,quote=FALSE,sep=",")
 
