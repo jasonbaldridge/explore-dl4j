@@ -38,6 +38,8 @@ This randomly reorders the lines in a text file. It is generally useful to have 
 
 ## Instructions for simulated data
 
+Go to the `explore-dl4j/simulation_data` dir and follow the instructions below.
+
 ### Linearly separable data
 
 Generate the data.
@@ -45,6 +47,49 @@ Generate the data.
 ```
 $ R CMD BATCH generate_linear_data.R
 ```
+
+Train and evaluate a one layer MLN, which should be sufficient to perform the task.
+
+```
+$ run-simple --train-file simulated_linear_data_train.csv --eval-file simulated_linear_data_eval.csv --num-layers 1 > out_linear_one_layer.txt 2>&1
+```
+
+You should see something like this.
+
+```
+$ tail out_linear_one_layer.txt
+==========================Scores========================================
+ Accuracy:  0.6013
+ Precision: 0.5747
+ Recall:    0.7792
+ F1 Score:  0.6615162577468375
+===========================================================================
+```
+
+Not as good as you might expect. Probably need to mess around with some parameters.
+
+
+
+### Non-linearly separable data
+
+Generate the data, which produces a four-dimensional ball surrounded by a four-dimensional ring. There is no hyperplane that can separate these two classes, so it makes deeper networks more interesting in this case.
+
+```
+$ R CMD BATCH generate_saturn_data.R
+```
+
+Verify that a one-layer network fails to separate the classes.
+
+```
+$ run-simple --train-file simulated_linear_data_train.csv --eval-file simulated_linear_data_eval.csv --num-layers 1 > out_saturn_one_layer.txt 2>&1
+```
+
+```
+$ run-simple --train-file simulated_saturn_data_train.csv --eval-file simulated_saturn_data_eval.csv --num-layers 2 > out_saturn_two_layer.txt 2>&1
+```
+
+Not there yet with this, so time to mess around with initialization and model structure.
+
 
 ## Instructions for sentiment classifier
   
