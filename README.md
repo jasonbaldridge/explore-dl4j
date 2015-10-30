@@ -80,15 +80,39 @@ $ R CMD BATCH generate_saturn_data.R
 Verify that a one-layer network fails to separate the classes.
 
 ```
-$ run-simple --train-file simulated_linear_data_train.csv --eval-file simulated_linear_data_eval.csv --num-layers 1 > out_saturn_one_layer.txt 2>&1
+$ run-simple --train-file simulated_saturn_data_train.csv --eval-file simulated_saturn_data_eval.csv --num-layers 1 > out_saturn_one_layer.txt 2>&1
 ```
+
+Failure, as expected.
+
+```
+$ tail 
+==========================Scores========================================
+ Accuracy:  0.4752
+ Precision: 0.4792
+ Recall:    0.4133
+ F1 Score:  0.44383213225943197
+===========================================================================
+```
+
+Now, try with two layers.
 
 ```
 $ run-simple --train-file simulated_saturn_data_train.csv --eval-file simulated_saturn_data_eval.csv --num-layers 2 > out_saturn_two_layer.txt 2>&1
 ```
 
-Not there yet with this, so time to mess around with initialization and model structure.
+Not there yet with this:
 
+```
+==========================Scores========================================
+ Accuracy:  0.5066
+ Precision: 0.5066
+ Recall:    1
+ F1 Score:  0.6725076330811097
+===========================================================================
+```
+
+Time to mess around with initialization and model structure, etc.
 
 ## Instructions for sentiment classifier
   
@@ -110,12 +134,12 @@ Run a sentiment classifier experiment. We'll run with less data to start with to
 
 ```
 $ head -10000 shuffled_training.processed.noemoticon.csv > small_training.processed.noemoticon.csv
-$ run-sentiment --trainfile small_training.processed.noemoticon.csv --vectorfile sentiment_word_vectors.txt --evalfile testdata.manual.2009.06.14.csv 
+$ run-sentiment --train-file small_training.processed.noemoticon.csv --vector-file sentiment_word_vectors.txt --eval-file testdata.manual.2009.06.14.csv 
 ```
 
-This should run, though it'll get accuracy no better than chance. This is running a single layer network (logistic regression).
+This should run, though it gets accuracy no better than chance. This is running a single layer network (logistic regression).
 
 ```
-$ run-sentiment --trainfile shuffled_training.processed.noemoticon.csv --vectorfile sentiment_word_vectors.txt --evalfile testdata.manual.2009.06.14.csv
+$ run-sentiment --train-file shuffled_training.processed.noemoticon.csv --vector-file sentiment_word_vectors.txt --eval-file testdata.manual.2009.06.14.csv
 ```
 
