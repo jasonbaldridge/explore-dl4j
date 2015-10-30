@@ -18,7 +18,7 @@ libraryDependencies ++= Seq(
   "org.deeplearning4j" % "deeplearning4j-ui" % dl4jVersion,
   "org.jblas" % "jblas" % "1.2.4",
   "org.nd4j" % "canova-nd4j-image" % "0.0.0.11",
-  "org.nd4j" % "nd4j-jblas" % nd4jVersion
+  "org.nd4j" % "nd4j-x86" % nd4jVersion
 )
 
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"

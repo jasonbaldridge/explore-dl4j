@@ -51,7 +51,7 @@ mycols = c('red', 'blue')
 #rgl::plot3d(out$features, col=mycols[out$labels+1])
 
 # Create simulated data.
-numDimensions = 4
+numDimensions = 2
     
 # Create training data.
 numTraining = 5000

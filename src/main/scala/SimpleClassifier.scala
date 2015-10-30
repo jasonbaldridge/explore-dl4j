@@ -83,10 +83,13 @@ object SimpleClassifier {
     // Train the model.
     log.info("Train model...")
     val mlnConf = {
-      if (numLayers==2)
-        twoLayerConf(seed, iterations, inputNum, outputNum)
-      else
+      if (numLayers==2) {
+        // Constrain the layer one dimension to be 1/4 of the size of the input dimension.
+        val layer1Size = (inputNum/4).toInt
+        twoLayerConf(seed, iterations, inputNum, outputNum, layer1Size)
+      } else {
         oneLayerConf(seed, iterations, inputNum, outputNum)
+      }
     }
     
     val model = new MultiLayerNetwork(mlnConf)
