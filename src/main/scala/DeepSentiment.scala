@@ -45,16 +45,16 @@ object DeepSentiment {
     
     // Train the model.
     val trainingData = vectorizeData(conf.trainFile(),w2vUtil)
-    val model = SimpleClassifier.train(trainingData, conf.numLayers())
-  
-    // Construct a reusable MLNContainer object that can eval new items.
-    val deepSentiment = new MLNContainer(model)
-  
-    // Evaluate on test data if provided.
-    conf.evalFile.get.foreach { testFileName =>
-      val evalStats = deepSentiment.eval(vectorizeData(testFileName,w2vUtil), conf.verbose())
-      println(evalStats)
-    }
+    //val model = SimpleClassifier.train(trainingData, conf.numLayers())
+    //
+    //// Construct a reusable MLNContainer object that can eval new items.
+    //val deepSentiment = new MLNContainer(model)
+    //
+    //// Evaluate on test data if provided.
+    //conf.evalFile.get.foreach { testFileName =>
+    //  val evalStats = deepSentiment.eval(vectorizeData(testFileName,w2vUtil), conf.verbose())
+    //  println(evalStats)
+    //}
   }
 
   /**

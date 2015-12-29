@@ -4,9 +4,9 @@ version := "0.1-SNAPSHOT"
 
 scalaVersion := "2.10.4"
 
-lazy val dl4jVersion = "0.4-rc3.4"
+lazy val dl4jVersion = "0.4-rc3.7"
 
-lazy val nd4jVersion = "0.4-rc3.5"
+lazy val nd4jVersion = "0.4-rc3.7"
 
 libraryDependencies ++= Seq(
   "org.rogach" %% "scallop" % "0.9.5",

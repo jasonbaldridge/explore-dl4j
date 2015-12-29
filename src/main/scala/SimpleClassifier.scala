@@ -34,7 +34,7 @@ object SimpleClassifier {
   def main(args: Array[String]) {
     val conf = new ClassifierCommand(args)
     conf.afterInit()
-    
+
     // Train the model.
     val model = train(readData(conf.trainFile()), conf.numLayers())
   
@@ -43,9 +43,24 @@ object SimpleClassifier {
   
     // Evaluate on test data if provided.
     conf.evalFile.get.foreach { testFileName =>
-      val evalStats = mln.eval(readData(testFileName), conf.verbose())
+      val evalItems = readData(testFileName).take(10)
+      val (labels,features) = evalItems.unzip
+      val ndlabels = Nd4j.create(labels.toArray)
+      val ndfeatures = Nd4j.create(features.toArray)
+      val evalStats = mln.eval(List((ndlabels,ndfeatures)), conf.verbose())
       println(evalStats)
+      //for ((labelRow, featureRow) <- evalItems.take(5)) {
+      //  val feats = Nd4j.create(featureRow)
+      //  val pred = model.predict(feats)
+      val output = model.output(ndfeatures)
+      println("Feat: " + ndfeatures)
+      //  println("Gold: " + labelRow.mkString(","))
+      println("Out:  " + output)
+      //  println("Pred: " + pred.mkString(","))
+      //  println
+      //}
     }
+    println(model.params)
   }
 
   def readData(filename: String) = {
@@ -53,31 +68,31 @@ object SimpleClassifier {
     import java.io._
 
     // Accumulator for the featurized items (label + feature vector).
-    val data = new ListBuffer[(INDArray,INDArray)]()
+    val data = new ListBuffer[(Array[Double],Array[Double])]()
     val iterator = new CSVReader(new FileReader(filename), ',', '"').iterator
     while (iterator.hasNext) {
       val items = iterator.next
       val labelString :: features = items.toList
       val label =
-        if (labelString=="0") Array(1.,0.) // negative class
-        else Array(0.,1.) // positive class
-      data.append((Nd4j.create(label),Nd4j.create(features.map(_.toDouble).toArray)))
+        if (labelString=="0") Array(0.0,1.0) // negative class
+        else Array(1.0,0.0) // positive class
+      data.append((label,features.map(_.toDouble).toArray))
     }
     data.toList
   }
   
-  def train(items: List[(INDArray,INDArray)], numLayers: Int) = {
+  def train(items: List[(Array[Double],Array[Double])], numLayers: Int) = {
 
     // Import convenience functions for creating MNL configs.
     import NetworkConfiguration._
     
     // We are using the word vectors as the input features, so obtain
-    // the length of the vectors to set thu inputNum value to the MLN.
+    // the length of the vectors to set the inputNum value to the MLN.
     val inputNum = items.head._2.length
 
     // Some parameters to set. 
     val outputNum = 2 // Because we are doing binary positive/negative classification.
-    val iterations = 5
+    val iterations = 50
     val seed = 123
 
     // Train the model.
@@ -85,7 +100,8 @@ object SimpleClassifier {
     val mlnConf = {
       if (numLayers==2) {
         // Constrain the layer one dimension to be 1/4 of the size of the input dimension.
-        val layer1Size = (inputNum/4).toInt
+        //val layer1Size = (inputNum/4).toInt
+        val layer1Size = 4
         twoLayerConf(seed, iterations, inputNum, outputNum, layer1Size)
       } else {
         oneLayerConf(seed, iterations, inputNum, outputNum)
@@ -94,12 +110,13 @@ object SimpleClassifier {
     
     val model = new MultiLayerNetwork(mlnConf)
     model.init()
-    for ((labelRow, featureRow) <- items)
-      model.fit(featureRow, labelRow)
+    for (batch <- items.grouped(50)) {
+      val (batchLabels, batchFeatures) = batch.unzip
+      val ndlabels = Nd4j.create(batchLabels.toArray)
+      val ndfeatures = Nd4j.create(batchFeatures.toArray)
+      model.fit(ndfeatures,ndlabels)
+    }
     model
   }
   
 }
-
-
-
